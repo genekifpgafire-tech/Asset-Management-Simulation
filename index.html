@@ -34,19 +34,44 @@
             flex-wrap: wrap;
             gap: 30px;
         }
-        h1 {
+        /* ヘッダー・ブランディング部分のスタイル */
+        .branding {
             width: 100%;
-            text-align: center;
-            color: var(--primary-color);
-            margin-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
             margin-bottom: 20px;
-            font-size: 24px;
+            padding-bottom: 15px;
             border-bottom: 2px solid var(--primary-light);
-            padding-bottom: 10px;
         }
+        .branding img {
+            width: 80px; /* キャラクターのサイズ */
+            height: auto;
+            border-radius: 50%; /* 少し丸みを持たせる */
+        }
+        .branding-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h1 {
+            color: var(--primary-color);
+            margin: 0 0 5px 0;
+            font-size: 26px;
+            text-align: left;
+        }
+        .producer-credit {
+            font-size: 14px;
+            color: #666;
+            font-weight: bold;
+            margin: 0;
+        }
+        /* --- ここまでヘッダー追加分 --- */
+
         .settings-panel {
             flex: 1;
-            min-width: 350px;
+            min-width: 360px;
         }
         .chart-panel {
             flex: 1.5;
@@ -85,7 +110,6 @@
             box-sizing: border-box;
             text-align: right;
         }
-        /* プレースホルダーの文字色を少し薄くする */
         input::placeholder {
             color: #bbb;
             font-size: 12px;
@@ -140,14 +164,14 @@
             color: var(--primary-color);
             margin: 10px 0;
         }
-        .withdrawal-box {
+        .phase-box {
             border: 1px solid var(--border-color);
             padding: 10px;
             border-radius: 6px;
             margin-bottom: 10px;
             background-color: #fafafa;
         }
-        .withdrawal-box .row-title {
+        .phase-box .row-title {
             font-size: 12px;
             font-weight: bold;
             color: #888;
@@ -190,7 +214,14 @@
 <body>
 
 <div class="container">
-    <h1>資産計算シミュレーター</h1>
+    
+    <div class="branding">
+        <img src="toritori.png" alt="トリトリ">
+        <div class="branding-info">
+            <h1>資産計算シミュレーター</h1>
+            <p class="producer-credit">Produced by FP1級 トリトリ (@toritori_fpgafire)</p>
+        </div>
+    </div>
 
     <div class="settings-panel">
         
@@ -210,34 +241,103 @@
             </div>
         </div>
         <div class="input-row">
-            <label>想定運用利回り (年利)</label>
+            <label>基本の運用利回り</label>
             <div class="flex-group">
-                <input type="number" id="annualRate" min="0" step="0.1" placeholder="例:5">
+                <input type="number" id="defaultRate" min="0" step="0.1" placeholder="例:5">
                 <span class="unit">％</span>
             </div>
         </div>
+        <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
+            ※期間指定がない年齢では、この「基本の利回り」が適用されます。
+        </p>
 
-        <div class="section-title">② 積立フェーズ</div>
-        <div class="input-row">
-            <label>積立を行う期間</label>
-            <div class="flex-group" style="font-size: 13px;">
-                <input type="number" id="saveEndAge" class="small-input" min="0" placeholder="例:60"> 歳まで
+        <div class="section-title">② 積立フェーズ (最大3枠)</div>
+        <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
+            ※利回りを空欄にした場合は「基本の運用利回り」で計算されます。
+        </p>
+
+        <div class="phase-box">
+            <div class="row-title">積立設定 A</div>
+            <div class="input-row">
+                <label>対象期間</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" id="iStart1" class="small-input" placeholder="開始"> 歳～ 
+                    <input type="number" id="iEnd1" class="small-input" placeholder="終了"> 歳
+                </div>
+            </div>
+            <div class="input-row">
+                <label>毎月の積立額</label>
+                <div class="flex-group">
+                    <input type="number" id="iAmt1" class="small-input" min="0" placeholder="金額">
+                    <span class="unit">万円</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>この期間の利回り</label>
+                <div class="flex-group">
+                    <input type="number" id="iRate1" class="small-input" min="0" step="0.1" placeholder="年利">
+                    <span class="unit">％</span>
+                </div>
             </div>
         </div>
-        <div class="input-row">
-            <label>毎月の積立額</label>
-            <div class="flex-group">
-                <input type="number" id="monthlyAmount" min="0" placeholder="例:5">
-                <span class="unit">万円</span>
+
+        <div class="phase-box">
+            <div class="row-title">積立設定 B</div>
+            <div class="input-row">
+                <label>対象期間</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" id="iStart2" class="small-input" placeholder="開始"> 歳～ 
+                    <input type="number" id="iEnd2" class="small-input" placeholder="終了"> 歳
+                </div>
+            </div>
+            <div class="input-row">
+                <label>毎月の積立額</label>
+                <div class="flex-group">
+                    <input type="number" id="iAmt2" class="small-input" min="0" placeholder="金額">
+                    <span class="unit">万円</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>この期間の利回り</label>
+                <div class="flex-group">
+                    <input type="number" id="iRate2" class="small-input" min="0" step="0.1" placeholder="年利">
+                    <span class="unit">％</span>
+                </div>
             </div>
         </div>
+
+        <div class="phase-box">
+            <div class="row-title">積立設定 C</div>
+            <div class="input-row">
+                <label>対象期間</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" id="iStart3" class="small-input" placeholder="開始"> 歳～ 
+                    <input type="number" id="iEnd3" class="small-input" placeholder="終了"> 歳
+                </div>
+            </div>
+            <div class="input-row">
+                <label>毎月の積立額</label>
+                <div class="flex-group">
+                    <input type="number" id="iAmt3" class="small-input" min="0" placeholder="金額">
+                    <span class="unit">万円</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>この期間の利回り</label>
+                <div class="flex-group">
+                    <input type="number" id="iRate3" class="small-input" min="0" step="0.1" placeholder="年利">
+                    <span class="unit">％</span>
+                </div>
+            </div>
+        </div>
+
 
         <div class="section-title">③ 取り崩しフェーズ (最大3枠)</div>
         <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
-            ※「一括」を選んだ場合、対象期間の<b>開始年齢</b>の年に1回だけ引き出されます。使わない枠は空欄にしてください。
+            ※「一括」は開始年齢に1回のみ引き出されます。
         </p>
 
-        <div class="withdrawal-box">
+        <div class="phase-box">
             <div class="row-title">取り崩し設定 A</div>
             <div class="input-row">
                 <label>対象期間</label>
@@ -260,7 +360,7 @@
             </div>
         </div>
 
-        <div class="withdrawal-box">
+        <div class="phase-box">
             <div class="row-title">取り崩し設定 B</div>
             <div class="input-row">
                 <label>対象期間</label>
@@ -283,7 +383,7 @@
             </div>
         </div>
 
-        <div class="withdrawal-box">
+        <div class="phase-box">
             <div class="row-title">取り崩し設定 C</div>
             <div class="input-row">
                 <label>対象期間</label>
@@ -347,19 +447,17 @@
         const startAge = parseInt(startAgeInput) || 0;
         
         const initialAmount = parseFloat(document.getElementById('initialAmount').value) * 10000 || 0;
-        const annualRate = parseFloat(document.getElementById('annualRate').value) / 100 || 0;
-
-        const saveEndAge = parseInt(document.getElementById('saveEndAge').value) || 0;
-        const monthlyAmount = parseFloat(document.getElementById('monthlyAmount').value) * 10000 || 0;
+        const defaultRate = parseFloat(document.getElementById('defaultRate').value) / 100 || 0;
 
         const endAge = 100;
-        // 未入力時はとりあえず0歳としてグラフを初期化する
         if (startAge >= endAge && startAgeInput !== "") return;
 
         const totalYears = endAge - startAge;
 
-        let currentPrincipal = initialAmount;
-        let pastWithdrawals = []; // 取り崩し履歴を保持（逸失利益の計算用）
+        let balanceFromInitial = initialAmount; 
+        let balanceFromAccum = 0;
+        
+        let currentPrincipal = initialAmount; 
         let isDepleted = false;
         
         let labels = [startAge];
@@ -367,57 +465,52 @@
         let profitData = [0];
         let tableHTML = '';
 
-        const accumulationYearsTotal = Math.max(0, saveEndAge - startAge);
-        const annualInvestment = monthlyAmount * 12;
-
-        // 年単位で計算処理
         for (let y = 1; y <= totalYears; y++) {
             let currentAgeYears = startAge + y - 1;
             
-            // --- ① 公式を用いたベース資産の計算 ---
-            let nAccYears = Math.min(y, accumulationYearsTotal); // 積立年数
-            let nAccMonths = nAccYears * 12; // 積立月数
-            let nHold = Math.max(0, y - accumulationYearsTotal); // 据置年数
-            let monthlyRate = annualRate / 12; // 月利
-            
-            // 【終価係数】 投資元本の終価： PV × (1 + 年利)^n
-            let fvPrincipal = initialAmount * Math.pow(1 + annualRate, y);
-            
-            // 【年金終価係数 (月利ベース)】 積立の終価： PMT × { (1 + 月利)^n - 1 } / 月利
-            let fvAnnuity = 0;
-            if (nAccMonths > 0) {
-                if (monthlyRate === 0) {
-                    fvAnnuity = monthlyAmount * nAccMonths;
-                } else {
-                    fvAnnuity = monthlyAmount * (Math.pow(1 + monthlyRate, nAccMonths) - 1) / monthlyRate;
+            let activeRate = defaultRate;
+            let activeMonthlyAmount = 0;
+
+            for (let i = 1; i <= 3; i++) {
+                let iStart = parseInt(document.getElementById(`iStart${i}`).value);
+                let iEnd = parseInt(document.getElementById(`iEnd${i}`).value);
+                let iAmt = parseFloat(document.getElementById(`iAmt${i}`).value);
+                let iRateStr = document.getElementById(`iRate${i}`).value;
+
+                if (!isNaN(iStart) && !isNaN(iEnd) && currentAgeYears >= iStart && currentAgeYears < iEnd) {
+                    activeMonthlyAmount = (isNaN(iAmt) ? 0 : iAmt) * 10000;
+                    if (iRateStr !== "") {
+                        activeRate = parseFloat(iRateStr) / 100;
+                    }
                 }
+            }
+
+            let annualGrowth = 1 + activeRate;
+            let monthlyRate = activeRate / 12;
+            let monthlyCompoundedAnnualGrowth = Math.pow(1 + monthlyRate, 12);
+
+            balanceFromInitial *= annualGrowth;
+
+            let fvAnnuityThisYear = 0;
+            let investedThisYear = 0;
+
+            if (activeMonthlyAmount > 0) {
+                balanceFromAccum *= monthlyCompoundedAnnualGrowth;
                 
-                // 【終価係数】 つみたて投資設定後の据置運用： 資産 × (1 + 年利)^n
-                if (nHold > 0) {
-                    fvAnnuity = fvAnnuity * Math.pow(1 + annualRate, nHold);
+                if (monthlyRate === 0) {
+                    fvAnnuityThisYear = activeMonthlyAmount * 12;
+                } else {
+                    fvAnnuityThisYear = activeMonthlyAmount * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
                 }
+                balanceFromAccum += fvAnnuityThisYear;
+                investedThisYear = activeMonthlyAmount * 12;
+            } else {
+                balanceFromAccum *= annualGrowth;
             }
-            
-            // 取崩しが一切なかった場合の「総資産理論値」
-            let grossBalance = fvPrincipal + fvAnnuity;
 
-            // --- ② 過去の取り崩しによる「逸失利益」のマイナス ---
-            let totalWithdrawalsFV = 0;
-            for (let pw of pastWithdrawals) {
-                let missedGrowthYears = y - pw.yearIndex;
-                totalWithdrawalsFV += pw.amount * Math.pow(1 + annualRate, missedGrowthYears);
-            }
-            
-            // 現在の本当の資産額（理論値 - 取り崩しによるマイナス分）
-            let currentTotalBeforeWithdrawal = grossBalance - totalWithdrawalsFV;
-            if (currentTotalBeforeWithdrawal < 0) currentTotalBeforeWithdrawal = 0;
-            if (isDepleted) currentTotalBeforeWithdrawal = 0;
-
-            // --- ③ 今年の積立と元本の更新 ---
-            let investedThisYear = (currentAgeYears < saveEndAge) ? annualInvestment : 0;
             currentPrincipal += investedThisYear;
+            let currentTotal = balanceFromInitial + balanceFromAccum;
 
-            // --- ④ 今年の取り崩し額の計算 ---
             let withdrawnAmountThisYear = 0;
             let withdrawPercentThisYear = 0;
 
@@ -428,12 +521,10 @@
                 let wVal = parseFloat(document.getElementById(`wVal${i}`).value) || 0;
 
                 if (wType === 'lump_sum') {
-                    // 一括取り崩し
                     if (currentAgeYears === wStart) {
                         withdrawnAmountThisYear += (wVal * 10000);
                     }
                 } else {
-                    // 継続取り崩し
                     if (currentAgeYears >= wStart && currentAgeYears < wEnd) {
                         if (wType === 'amount') withdrawnAmountThisYear += (wVal * 10000 * 12);
                         if (wType === 'percent') withdrawPercentThisYear += (wVal / 100);
@@ -441,34 +532,35 @@
                 }
             }
 
-            let currentTotal = currentTotalBeforeWithdrawal;
             let totalWithdrawal = withdrawnAmountThisYear + (currentTotal * withdrawPercentThisYear);
 
-            // 残高を超えないよう補正
             if (totalWithdrawal > currentTotal) {
                 totalWithdrawal = currentTotal;
             }
 
-            // 取り崩しの実行と記録
             if (totalWithdrawal > 0 && !isDepleted) {
-                // 元本と利益の割合に応じて元本残高を減らす
-                let ratio = currentPrincipal > 0 ? (currentPrincipal / currentTotal) : 0;
-                if (ratio > 1) ratio = 1; // フェイルセーフ
+                let ratioInit = currentTotal > 0 ? (balanceFromInitial / currentTotal) : 0;
+                let ratioAccum = currentTotal > 0 ? (balanceFromAccum / currentTotal) : 0;
                 
-                pastWithdrawals.push({ amount: totalWithdrawal, yearIndex: y }); // 逸失利益計算用に記録
+                balanceFromInitial -= totalWithdrawal * ratioInit;
+                balanceFromAccum -= totalWithdrawal * ratioAccum;
+                
+                let ratioPrincipal = currentTotal > 0 ? (currentPrincipal / currentTotal) : 0;
+                if (ratioPrincipal > 1) ratioPrincipal = 1; 
+                currentPrincipal -= (totalWithdrawal * ratioPrincipal);
+                
                 currentTotal -= totalWithdrawal;
-                currentPrincipal -= (totalWithdrawal * ratio);
             }
 
-            // 資産枯渇判定
             if (currentTotal <= 0 && y > 0 && !isDepleted) {
                 currentTotal = 0;
+                balanceFromInitial = 0;
+                balanceFromAccum = 0;
                 currentPrincipal = 0;
                 isDepleted = true;
             }
 
-            // --- ⑤ グラフと表へのデータ格納 ---
-            let displayAge = currentAgeYears + 1; // その年の「年末」時点の年齢
+            let displayAge = currentAgeYears + 1; 
             labels.push(displayAge);
             principalData.push(Math.round(currentPrincipal));
             profitData.push(Math.round(currentTotal - currentPrincipal));
@@ -485,12 +577,10 @@
             `;
         }
 
-        // --- 結果の表示 ---
         document.getElementById('finalTotal').innerText = Math.round(principalData[totalYears] + profitData[totalYears]).toLocaleString() + '円';
         document.getElementById('depletionWarning').style.display = isDepleted ? 'block' : 'none';
         document.getElementById('tableBody').innerHTML = tableHTML;
 
-        // --- グラフの描画 ---
         drawChart(labels, principalData, profitData);
     }
 
