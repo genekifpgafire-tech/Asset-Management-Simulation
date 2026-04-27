@@ -34,21 +34,20 @@
             flex-wrap: wrap;
             gap: 30px;
         }
-        /* ヘッダー・ブランディング部分のスタイル */
         .branding {
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             padding-bottom: 15px;
             border-bottom: 2px solid var(--primary-light);
         }
         .branding img {
-            width: 80px; /* キャラクターのサイズ */
+            width: 80px; 
             height: auto;
-            border-radius: 50%; /* 少し丸みを持たせる */
+            border-radius: 50%; 
         }
         .branding-info {
             display: flex;
@@ -67,7 +66,29 @@
             font-weight: bold;
             margin: 0;
         }
-        /* --- ここまでヘッダー追加分 --- */
+
+        /* 追加：使い方の説明枠 */
+        .instructions {
+            width: 100%;
+            background-color: #f0f9fc;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #444;
+            box-sizing: border-box;
+        }
+        .instructions h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #1a5c73;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
 
         .settings-panel {
             flex: 1;
@@ -164,6 +185,27 @@
             color: var(--primary-color);
             margin: 10px 0;
         }
+        .target-age-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border: 2px dashed var(--primary-light);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .target-age-box .input-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .target-age-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
         .phase-box {
             border: 1px solid var(--border-color);
             padding: 10px;
@@ -177,13 +219,16 @@
             color: #888;
             margin-bottom: 8px;
         }
+
         .table-wrapper {
             margin-top: 25px;
             max-height: 400px;
             overflow-y: auto;
+            overflow-x: auto; 
             border: 1px solid var(--border-color);
             border-radius: 6px;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+            -webkit-overflow-scrolling: touch; 
         }
         table {
             width: 100%;
@@ -194,20 +239,45 @@
             border: 1px solid var(--border-color);
             padding: 8px 10px;
             text-align: right;
-            white-space: nowrap;
+            white-space: nowrap; 
         }
         th {
             background-color: var(--primary-light);
             color: #1a5c73;
             position: sticky;
             top: 0;
-            z-index: 1;
+            z-index: 2;
             text-align: center;
+            box-shadow: 0 1px 0 var(--border-color), 0 -1px 0 var(--border-color);
         }
         td:first-child {
             text-align: center;
             font-weight: bold;
             background-color: #f9fdfd;
+        }
+        
+        /* グラフに文字を被せるためのスタイル */
+        .chart-wrapper {
+            position: relative; 
+            height: 300px; 
+            width: 100%; 
+            margin-bottom: 20px;
+        }
+        .chart-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #666;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -216,11 +286,20 @@
 <div class="container">
     
     <div class="branding">
-        <img src="toritori.png" alt="トリトリ">
+        <img src="IMG_3753-removebg-preview.png" alt="トリトリ">
         <div class="branding-info">
             <h1>資産計算シミュレーター</h1>
             <p class="producer-credit">Produced by FP1級 トリトリ (@toritori_fpgafire)</p>
         </div>
+    </div>
+
+    <div class="instructions">
+        <h2>💡 簡単な使い方</h2>
+        <ol>
+            <li>まずは<strong>「現在の年齢」</strong>を入力してください。</li>
+            <li><strong>「基本の運用利回り」</strong>に運用率を入力すると、その後は投資元本を入れた後ずっとその％で運用し続けます。</li>
+            <li>お好みで積立や取り崩しを設定し、<strong>「シミュレーション実行」</strong>を押してください。</li>
+        </ol>
     </div>
 
     <div class="settings-panel">
@@ -410,13 +489,31 @@
     </div>
 
     <div class="chart-panel">
-        <canvas id="assetChart"></canvas>
+        
+        <div class="chart-wrapper">
+            <canvas id="assetChart"></canvas>
+            <div id="chartOverlay" class="chart-overlay">
+                条件を入力して「シミュレーション実行」を押してください
+            </div>
+        </div>
         
         <div class="result-box">
             <div style="font-size: 14px; color: #555;">100歳時点での最終的な資産残高</div>
             <div class="result-value" id="finalTotal">0円</div>
             <div style="margin-top:10px; font-size: 13px; color: #d9534f; font-weight:bold; display:none;" id="depletionWarning">
                 ※シミュレーション期間中に資産が枯渇しました
+            </div>
+        </div>
+
+        <div class="target-age-box">
+            <div class="input-wrap">
+                <span style="font-size: 14px; font-weight: bold; color: #555;">ピンポイント確認：</span>
+                <input type="number" id="targetAgeInput" value="65" min="0" max="100" style="width: 60px; padding: 5px; text-align: right;" oninput="updateTargetResult()"> 
+                <span style="font-size: 14px; font-weight: bold; color: #555;">歳時点の資産残高</span>
+            </div>
+            <div class="target-age-value" id="targetAgeTotal">0円</div>
+            <div style="font-size: 13px; color: #666; margin-top: 5px;">
+                (投資元本: <span id="targetAgePrincipal" style="font-weight:bold;">0</span>円 / 運用益: <span id="targetAgeProfit" style="font-weight:bold;">0</span>円)
             </div>
         </div>
 
@@ -442,15 +539,38 @@
 <script>
     let myChart = null;
 
+    let globalLabels = [];
+    let globalPrincipalData = [];
+    let globalProfitData = [];
+
     function calculate() {
         const startAgeInput = document.getElementById('currentAge').value;
-        const startAge = parseInt(startAgeInput) || 0;
+        const overlay = document.getElementById('chartOverlay');
         
+        // 年齢が未入力の時は、空のグラフを描画してオーバーレイを表示する
+        if (startAgeInput === "") {
+            overlay.style.display = 'flex';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">条件を入力して「シミュレーション実行」を押してください</td></tr>';
+            document.getElementById('finalTotal').innerText = '0円';
+            document.getElementById('targetAgeTotal').innerText = '- 円';
+            document.getElementById('targetAgePrincipal').innerText = '-';
+            document.getElementById('targetAgeProfit').innerText = '-';
+            document.getElementById('depletionWarning').style.display = 'none';
+            
+            // 空っぽのグラフを描画（メモリだけ表示）
+            drawChart([], [], []);
+            return;
+        }
+
+        // 入力がある場合はオーバーレイを隠す
+        overlay.style.display = 'none';
+
+        const startAge = parseInt(startAgeInput) || 0;
         const initialAmount = parseFloat(document.getElementById('initialAmount').value) * 10000 || 0;
         const defaultRate = parseFloat(document.getElementById('defaultRate').value) / 100 || 0;
 
         const endAge = 100;
-        if (startAge >= endAge && startAgeInput !== "") return;
+        if (startAge >= endAge) return;
 
         const totalYears = endAge - startAge;
 
@@ -577,11 +697,38 @@
             `;
         }
 
+        globalLabels = labels;
+        globalPrincipalData = principalData;
+        globalProfitData = profitData;
+
         document.getElementById('finalTotal').innerText = Math.round(principalData[totalYears] + profitData[totalYears]).toLocaleString() + '円';
         document.getElementById('depletionWarning').style.display = isDepleted ? 'block' : 'none';
         document.getElementById('tableBody').innerHTML = tableHTML;
 
         drawChart(labels, principalData, profitData);
+        
+        updateTargetResult();
+    }
+
+    function updateTargetResult() {
+        const targetAge = parseInt(document.getElementById('targetAgeInput').value);
+        if (isNaN(targetAge) || globalLabels.length === 0) return;
+
+        const index = globalLabels.indexOf(targetAge);
+
+        if (index !== -1) {
+            const principal = globalPrincipalData[index];
+            const profit = globalProfitData[index];
+            const total = principal + profit;
+
+            document.getElementById('targetAgeTotal').innerText = Math.round(total).toLocaleString() + '円';
+            document.getElementById('targetAgePrincipal').innerText = Math.round(principal).toLocaleString();
+            document.getElementById('targetAgeProfit').innerText = Math.round(profit).toLocaleString();
+        } else {
+            document.getElementById('targetAgeTotal').innerText = '- 円';
+            document.getElementById('targetAgePrincipal').innerText = '-';
+            document.getElementById('targetAgeProfit').innerText = '-';
+        }
     }
 
     function drawChart(labels, principalData, profitData) {
@@ -591,7 +738,7 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels.map(y => y + '歳'),
+                labels: labels.length > 0 ? labels.map(y => y + '歳') : ['年齢'],
                 datasets: [
                     {
                         label: '投資元本',
@@ -616,8 +763,10 @@
                             label: function(context) {
                                 let label = context.dataset.label || '';
                                 if (label) label += ': ';
-                                if (context.parsed.y !== null) {
+                                if (context.parsed.y !== null && context.parsed.y !== 0) {
                                     label += Math.round(context.parsed.y / 10000).toLocaleString() + '万円';
+                                } else if (context.parsed.y === 0) {
+                                    label += '0円';
                                 }
                                 return label;
                             }
@@ -638,8 +787,6 @@
     }
 
     window.onload = function() {
-        document.getElementById('assetChart').parentElement.style.height = '700px';
-        document.getElementById('assetChart').style.maxHeight = '250px';
         calculate();
     };
 </script>
