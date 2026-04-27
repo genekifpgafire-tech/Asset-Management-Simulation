@@ -66,8 +66,6 @@
             font-weight: bold;
             margin: 0;
         }
-
-        /* 追加：使い方の説明枠 */
         .instructions {
             width: 100%;
             background-color: #f0f9fc;
@@ -154,7 +152,7 @@
             align-items: center;
             gap: 5px;
         }
-        button {
+        .action-btn {
             width: 100%;
             padding: 15px;
             background-color: var(--primary-color);
@@ -168,8 +166,24 @@
             margin-top: 20px;
             box-shadow: 0 4px 6px rgba(85, 187, 225, 0.2);
         }
-        button:hover {
+        .action-btn:hover {
             background-color: #3fa5cb;
+        }
+        .add-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #eaf6fa;
+            color: var(--primary-color);
+            border: 2px dashed var(--primary-color);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        .add-btn:hover {
+            background-color: #d1eff7;
         }
         .result-box {
             margin-top: 20px;
@@ -212,12 +226,16 @@
             border-radius: 6px;
             margin-bottom: 10px;
             background-color: #fafafa;
+            position: relative;
         }
         .phase-box .row-title {
             font-size: 12px;
             font-weight: bold;
-            color: #888;
+            color: #1a5c73;
             margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .table-wrapper {
@@ -256,7 +274,6 @@
             background-color: #f9fdfd;
         }
         
-        /* グラフに文字を被せるためのスタイル */
         .chart-wrapper {
             position: relative; 
             height: 300px; 
@@ -297,8 +314,8 @@
         <h2>💡 簡単な使い方</h2>
         <ol>
             <li>まずは<strong>「現在の年齢」</strong>を入力してください。</li>
-            <li><strong>「基本の運用利回り」</strong>に運用率を入力すると、その後は投資元本を入れた後ずっとその％で運用し続けます。</li>
-            <li>お好みで積立や取り崩しを設定し、<strong>「シミュレーション実行」</strong>を押してください。</li>
+            <li><strong>「基本の運用利回り」</strong>に運用率を入力すると、その後は投資元本を含め、設定がない期間はずっとその％で運用し続けます。</li>
+            <li>「追加する」ボタンを押して、<strong>毎月積立</strong>や<strong>一括投入（一時金）</strong>、<strong>取り崩し</strong>を自由に追加し、「シミュレーション実行」を押してください。</li>
         </ol>
     </div>
 
@@ -326,166 +343,89 @@
                 <span class="unit">％</span>
             </div>
         </div>
+
+        <div class="section-title">② 資金投入フェーズ</div>
         <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
-            ※期間指定がない年齢では、この「基本の利回り」が適用されます。
+            ※利回りを空欄にした場合は「基本の運用利回り」で計算されます。<br>
+            ※一括投入は、指定した年齢の年に1回加算されます。
         </p>
 
-        <div class="section-title">② 積立フェーズ (最大3枠)</div>
-        <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
-            ※利回りを空欄にした場合は「基本の運用利回り」で計算されます。
-        </p>
-
-        <div class="phase-box">
-            <div class="row-title">積立設定 A</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="iStart1" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="iEnd1" class="small-input" placeholder="終了"> 歳
+        <div id="investments-container">
+            <div class="phase-box investment-box">
+                <div class="row-title">
+                    <span>資金投入 1</span>
+                    </div>
+                <div class="input-row">
+                    <label>方式</label>
+                    <div class="flex-group">
+                        <select class="i-type" style="width: 85px;" onchange="toggleInvEndAge(this)">
+                            <option value="amount">毎月積立</option>
+                            <option value="lump_sum">一括投入</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="input-row">
-                <label>毎月の積立額</label>
-                <div class="flex-group">
-                    <input type="number" id="iAmt1" class="small-input" min="0" placeholder="金額">
-                    <span class="unit">万円</span>
+                <div class="input-row">
+                    <label>対象年齢</label>
+                    <div class="flex-group" style="font-size: 13px;">
+                        <input type="number" class="i-start small-input" placeholder="開始"> 歳
+                        <span class="i-end-tilde">～</span>
+                        <span class="i-end-wrap"><input type="number" class="i-end small-input" placeholder="終了"> 歳</span>
+                    </div>
                 </div>
-            </div>
-            <div class="input-row">
-                <label>この期間の利回り</label>
-                <div class="flex-group">
-                    <input type="number" id="iRate1" class="small-input" min="0" step="0.1" placeholder="年利">
-                    <span class="unit">％</span>
+                <div class="input-row">
+                    <label>金額</label>
+                    <div class="flex-group">
+                        <input type="number" class="i-amt small-input" min="0" placeholder="金額">
+                        <span class="unit">万円</span>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="phase-box">
-            <div class="row-title">積立設定 B</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="iStart2" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="iEnd2" class="small-input" placeholder="終了"> 歳
-                </div>
-            </div>
-            <div class="input-row">
-                <label>毎月の積立額</label>
-                <div class="flex-group">
-                    <input type="number" id="iAmt2" class="small-input" min="0" placeholder="金額">
-                    <span class="unit">万円</span>
-                </div>
-            </div>
-            <div class="input-row">
-                <label>この期間の利回り</label>
-                <div class="flex-group">
-                    <input type="number" id="iRate2" class="small-input" min="0" step="0.1" placeholder="年利">
-                    <span class="unit">％</span>
+                <div class="input-row">
+                    <label>この期間の利回り</label>
+                    <div class="flex-group">
+                        <input type="number" class="i-rate small-input" min="0" step="0.1" placeholder="年利">
+                        <span class="unit">％</span>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="phase-box">
-            <div class="row-title">積立設定 C</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="iStart3" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="iEnd3" class="small-input" placeholder="終了"> 歳
-                </div>
-            </div>
-            <div class="input-row">
-                <label>毎月の積立額</label>
-                <div class="flex-group">
-                    <input type="number" id="iAmt3" class="small-input" min="0" placeholder="金額">
-                    <span class="unit">万円</span>
-                </div>
-            </div>
-            <div class="input-row">
-                <label>この期間の利回り</label>
-                <div class="flex-group">
-                    <input type="number" id="iRate3" class="small-input" min="0" step="0.1" placeholder="年利">
-                    <span class="unit">％</span>
-                </div>
-            </div>
-        </div>
+        <button type="button" class="add-btn" onclick="addInvestment()">＋ 資金投入を追加する</button>
 
 
-        <div class="section-title">③ 取り崩しフェーズ (最大3枠)</div>
+        <div class="section-title">③ 取り崩しフェーズ</div>
         <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
             ※「一括」は開始年齢に1回のみ引き出されます。
         </p>
 
-        <div class="phase-box">
-            <div class="row-title">取り崩し設定 A</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="wStart1" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="wEnd1" class="small-input" placeholder="終了"> 歳
+        <div id="withdrawals-container">
+            <div class="phase-box withdrawal-box">
+                <div class="row-title">
+                    <span>取り崩し 1</span>
                 </div>
-            </div>
-            <div class="input-row">
-                <label>方式と金額/割合</label>
-                <div class="flex-group">
-                    <select id="wType1" style="width: 85px;">
-                        <option value="amount">月額</option>
-                        <option value="percent">年率</option>
-                        <option value="lump_sum">一括</option>
-                    </select>
-                    <input type="number" id="wVal1" class="small-input" min="0" step="0.1" placeholder="数値">
-                    <span class="unit">万/%</span>
+                <div class="input-row">
+                    <label>方式と金額/割合</label>
+                    <div class="flex-group">
+                        <select class="w-type" style="width: 85px;" onchange="toggleWdwEndAge(this)">
+                            <option value="amount">月額</option>
+                            <option value="percent">年率</option>
+                            <option value="lump_sum">一括</option>
+                        </select>
+                        <input type="number" class="w-val small-input" min="0" step="0.1" placeholder="数値">
+                        <span class="unit">万/%</span>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="phase-box">
-            <div class="row-title">取り崩し設定 B</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="wStart2" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="wEnd2" class="small-input" placeholder="終了"> 歳
-                </div>
-            </div>
-            <div class="input-row">
-                <label>方式と金額/割合</label>
-                <div class="flex-group">
-                    <select id="wType2" style="width: 85px;">
-                        <option value="amount">月額</option>
-                        <option value="percent" selected>年率</option>
-                        <option value="lump_sum">一括</option>
-                    </select>
-                    <input type="number" id="wVal2" class="small-input" min="0" step="0.1" placeholder="数値">
-                    <span class="unit">万/%</span>
+                <div class="input-row">
+                    <label>対象年齢</label>
+                    <div class="flex-group" style="font-size: 13px;">
+                        <input type="number" class="w-start small-input" placeholder="開始"> 歳
+                        <span class="w-end-tilde">～</span>
+                        <span class="w-end-wrap"><input type="number" class="w-end small-input" placeholder="終了"> 歳</span>
+                    </div>
                 </div>
             </div>
         </div>
+        <button type="button" class="add-btn" onclick="addWithdrawal()">＋ 取り崩しを追加する</button>
 
-        <div class="phase-box">
-            <div class="row-title">取り崩し設定 C</div>
-            <div class="input-row">
-                <label>対象期間</label>
-                <div class="flex-group" style="font-size: 13px;">
-                    <input type="number" id="wStart3" class="small-input" placeholder="開始"> 歳～ 
-                    <input type="number" id="wEnd3" class="small-input" placeholder="終了"> 歳
-                </div>
-            </div>
-            <div class="input-row">
-                <label>方式と金額/割合</label>
-                <div class="flex-group">
-                    <select id="wType3" style="width: 85px;">
-                        <option value="amount">月額</option>
-                        <option value="percent">年率</option>
-                        <option value="lump_sum" selected>一括</option>
-                    </select>
-                    <input type="number" id="wVal3" class="small-input" min="0" step="0.1" placeholder="数値">
-                    <span class="unit">万/%</span>
-                </div>
-            </div>
-        </div>
-
-        <button onclick="calculate()">シミュレーション実行</button>
+        <button class="action-btn" onclick="calculate()">シミュレーション実行</button>
     </div>
 
     <div class="chart-panel">
@@ -530,7 +470,7 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -538,16 +478,119 @@
 
 <script>
     let myChart = null;
-
     let globalLabels = [];
     let globalPrincipalData = [];
     let globalProfitData = [];
+    let invCount = 1;
+    let wdwCount = 1;
+
+    // 入力枠の追加関数（資金投入）
+    function addInvestment() {
+        invCount++;
+        const container = document.getElementById('investments-container');
+        const html = `
+        <div class="phase-box investment-box">
+            <div class="row-title">
+                <span>資金投入 ${invCount}</span>
+                <span onclick="this.closest('.phase-box').remove()" style="color:#d9534f; cursor:pointer; font-size:12px;">✖ 削除</span>
+            </div>
+            <div class="input-row">
+                <label>方式</label>
+                <div class="flex-group">
+                    <select class="i-type" style="width: 85px;" onchange="toggleInvEndAge(this)">
+                        <option value="amount">毎月積立</option>
+                        <option value="lump_sum">一括投入</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>対象年齢</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" class="i-start small-input" placeholder="開始"> 歳
+                    <span class="i-end-tilde">～</span>
+                    <span class="i-end-wrap"><input type="number" class="i-end small-input" placeholder="終了"> 歳</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>金額</label>
+                <div class="flex-group">
+                    <input type="number" class="i-amt small-input" min="0" placeholder="金額">
+                    <span class="unit">万円</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>この期間の利回り</label>
+                <div class="flex-group">
+                    <input type="number" class="i-rate small-input" min="0" step="0.1" placeholder="年利">
+                    <span class="unit">％</span>
+                </div>
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // 入力枠の追加関数（取り崩し）
+    function addWithdrawal() {
+        wdwCount++;
+        const container = document.getElementById('withdrawals-container');
+        const html = `
+        <div class="phase-box withdrawal-box">
+            <div class="row-title">
+                <span>取り崩し ${wdwCount}</span>
+                <span onclick="this.closest('.phase-box').remove()" style="color:#d9534f; cursor:pointer; font-size:12px;">✖ 削除</span>
+            </div>
+            <div class="input-row">
+                <label>方式と金額/割合</label>
+                <div class="flex-group">
+                    <select class="w-type" style="width: 85px;" onchange="toggleWdwEndAge(this)">
+                        <option value="amount">月額</option>
+                        <option value="percent">年率</option>
+                        <option value="lump_sum">一括</option>
+                    </select>
+                    <input type="number" class="w-val small-input" min="0" step="0.1" placeholder="数値">
+                    <span class="unit">万/%</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>対象年齢</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" class="w-start small-input" placeholder="開始"> 歳
+                    <span class="w-end-tilde">～</span>
+                    <span class="w-end-wrap"><input type="number" class="w-end small-input" placeholder="終了"> 歳</span>
+                </div>
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // 一括を選んだ時に終了年齢を隠す関数（資金投入用）
+    function toggleInvEndAge(selectElem) {
+        const box = selectElem.closest('.phase-box');
+        if (selectElem.value === 'lump_sum') {
+            box.querySelector('.i-end-wrap').style.display = 'none';
+            box.querySelector('.i-end-tilde').style.display = 'none';
+        } else {
+            box.querySelector('.i-end-wrap').style.display = 'inline-block';
+            box.querySelector('.i-end-tilde').style.display = 'inline';
+        }
+    }
+
+    // 一括を選んだ時に終了年齢を隠す関数（取り崩し用）
+    function toggleWdwEndAge(selectElem) {
+        const box = selectElem.closest('.phase-box');
+        if (selectElem.value === 'lump_sum') {
+            box.querySelector('.w-end-wrap').style.display = 'none';
+            box.querySelector('.w-end-tilde').style.display = 'none';
+        } else {
+            box.querySelector('.w-end-wrap').style.display = 'inline-block';
+            box.querySelector('.w-end-tilde').style.display = 'inline';
+        }
+    }
 
     function calculate() {
         const startAgeInput = document.getElementById('currentAge').value;
         const overlay = document.getElementById('chartOverlay');
         
-        // 年齢が未入力の時は、空のグラフを描画してオーバーレイを表示する
         if (startAgeInput === "") {
             overlay.style.display = 'flex';
             document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">条件を入力して「シミュレーション実行」を押してください</td></tr>';
@@ -556,13 +599,10 @@
             document.getElementById('targetAgePrincipal').innerText = '-';
             document.getElementById('targetAgeProfit').innerText = '-';
             document.getElementById('depletionWarning').style.display = 'none';
-            
-            // 空っぽのグラフを描画（メモリだけ表示）
             drawChart([], [], []);
             return;
         }
 
-        // 入力がある場合はオーバーレイを隠す
         overlay.style.display = 'none';
 
         const startAge = parseInt(startAgeInput) || 0;
@@ -574,9 +614,32 @@
 
         const totalYears = endAge - startAge;
 
+        // UIから資金投入の設定をすべて読み取る
+        let invSettings = [];
+        document.querySelectorAll('.investment-box').forEach(box => {
+            invSettings.push({
+                type: box.querySelector('.i-type').value,
+                start: parseInt(box.querySelector('.i-start').value),
+                end: parseInt(box.querySelector('.i-end').value),
+                amt: (parseFloat(box.querySelector('.i-amt').value) || 0) * 10000,
+                rateStr: box.querySelector('.i-rate').value,
+                balance: 0, 
+                principal: 0 
+            });
+        });
+
+        // UIから取り崩しの設定をすべて読み取る
+        let wdwSettings = [];
+        document.querySelectorAll('.withdrawal-box').forEach(box => {
+            wdwSettings.push({
+                type: box.querySelector('.w-type').value,
+                start: parseInt(box.querySelector('.w-start').value),
+                end: parseInt(box.querySelector('.w-end').value),
+                val: parseFloat(box.querySelector('.w-val').value) || 0
+            });
+        });
+
         let balanceFromInitial = initialAmount; 
-        let balanceFromAccum = 0;
-        
         let currentPrincipal = initialAmount; 
         let isDepleted = false;
         
@@ -588,69 +651,65 @@
         for (let y = 1; y <= totalYears; y++) {
             let currentAgeYears = startAge + y - 1;
             
-            let activeRate = defaultRate;
-            let activeMonthlyAmount = 0;
+            // ① 初期元本バケツを増やす
+            balanceFromInitial *= (1 + defaultRate);
+            
+            let totalInvestedThisYear = 0;
 
-            for (let i = 1; i <= 3; i++) {
-                let iStart = parseInt(document.getElementById(`iStart${i}`).value);
-                let iEnd = parseInt(document.getElementById(`iEnd${i}`).value);
-                let iAmt = parseFloat(document.getElementById(`iAmt${i}`).value);
-                let iRateStr = document.getElementById(`iRate${i}`).value;
+            // ② 各資金投入バケツを処理する
+            invSettings.forEach(inv => {
+                let activeRate = inv.rateStr !== "" ? parseFloat(inv.rateStr) / 100 : defaultRate;
+                let annualGrowth = 1 + activeRate;
+                let monthlyRate = activeRate / 12;
 
-                if (!isNaN(iStart) && !isNaN(iEnd) && currentAgeYears >= iStart && currentAgeYears < iEnd) {
-                    activeMonthlyAmount = (isNaN(iAmt) ? 0 : iAmt) * 10000;
-                    if (iRateStr !== "") {
-                        activeRate = parseFloat(iRateStr) / 100;
+                if (inv.type === 'lump_sum') {
+                    // 一括投入バケツの成長
+                    inv.balance *= annualGrowth;
+                    if (currentAgeYears === inv.start && inv.amt > 0) {
+                        inv.balance += inv.amt;
+                        inv.principal += inv.amt;
+                        totalInvestedThisYear += inv.amt;
+                    }
+                } else {
+                    // 毎月積立バケツの成長
+                    if (!isNaN(inv.start) && !isNaN(inv.end) && currentAgeYears >= inv.start && currentAgeYears < inv.end && inv.amt > 0) {
+                        inv.balance *= Math.pow(1 + monthlyRate, 12);
+                        let fvAnnuity = 0;
+                        if (monthlyRate === 0) {
+                            fvAnnuity = inv.amt * 12;
+                        } else {
+                            fvAnnuity = inv.amt * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
+                        }
+                        inv.balance += fvAnnuity;
+                        inv.principal += (inv.amt * 12);
+                        totalInvestedThisYear += (inv.amt * 12);
+                    } else {
+                        // 据置期間
+                        inv.balance *= annualGrowth;
                     }
                 }
-            }
+            });
 
-            let annualGrowth = 1 + activeRate;
-            let monthlyRate = activeRate / 12;
-            let monthlyCompoundedAnnualGrowth = Math.pow(1 + monthlyRate, 12);
+            // 現在の総資産（取り崩し前）
+            let currentTotal = balanceFromInitial + invSettings.reduce((sum, inv) => sum + inv.balance, 0);
+            currentPrincipal += totalInvestedThisYear;
 
-            balanceFromInitial *= annualGrowth;
-
-            let fvAnnuityThisYear = 0;
-            let investedThisYear = 0;
-
-            if (activeMonthlyAmount > 0) {
-                balanceFromAccum *= monthlyCompoundedAnnualGrowth;
-                
-                if (monthlyRate === 0) {
-                    fvAnnuityThisYear = activeMonthlyAmount * 12;
-                } else {
-                    fvAnnuityThisYear = activeMonthlyAmount * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
-                }
-                balanceFromAccum += fvAnnuityThisYear;
-                investedThisYear = activeMonthlyAmount * 12;
-            } else {
-                balanceFromAccum *= annualGrowth;
-            }
-
-            currentPrincipal += investedThisYear;
-            let currentTotal = balanceFromInitial + balanceFromAccum;
-
+            // ③ 取り崩し処理
             let withdrawnAmountThisYear = 0;
             let withdrawPercentThisYear = 0;
 
-            for (let i = 1; i <= 3; i++) {
-                let wStart = parseInt(document.getElementById(`wStart${i}`).value) || 0;
-                let wEnd = parseInt(document.getElementById(`wEnd${i}`).value) || 0;
-                let wType = document.getElementById(`wType${i}`).value;
-                let wVal = parseFloat(document.getElementById(`wVal${i}`).value) || 0;
-
-                if (wType === 'lump_sum') {
-                    if (currentAgeYears === wStart) {
-                        withdrawnAmountThisYear += (wVal * 10000);
+            wdwSettings.forEach(wdw => {
+                if (wdw.type === 'lump_sum') {
+                    if (currentAgeYears === wdw.start) {
+                        withdrawnAmountThisYear += (wdw.val * 10000);
                     }
                 } else {
-                    if (currentAgeYears >= wStart && currentAgeYears < wEnd) {
-                        if (wType === 'amount') withdrawnAmountThisYear += (wVal * 10000 * 12);
-                        if (wType === 'percent') withdrawPercentThisYear += (wVal / 100);
+                    if (!isNaN(wdw.start) && !isNaN(wdw.end) && currentAgeYears >= wdw.start && currentAgeYears < wdw.end) {
+                        if (wdw.type === 'amount') withdrawnAmountThisYear += (wdw.val * 10000 * 12);
+                        if (wdw.type === 'percent') withdrawPercentThisYear += (wdw.val / 100);
                     }
                 }
-            }
+            });
 
             let totalWithdrawal = withdrawnAmountThisYear + (currentTotal * withdrawPercentThisYear);
 
@@ -658,12 +717,16 @@
                 totalWithdrawal = currentTotal;
             }
 
+            // バケツから割合で引き出す
             if (totalWithdrawal > 0 && !isDepleted) {
-                let ratioInit = currentTotal > 0 ? (balanceFromInitial / currentTotal) : 0;
-                let ratioAccum = currentTotal > 0 ? (balanceFromAccum / currentTotal) : 0;
+                let ratio = currentTotal > 0 ? (totalWithdrawal / currentTotal) : 0;
+                if (ratio > 1) ratio = 1;
                 
-                balanceFromInitial -= totalWithdrawal * ratioInit;
-                balanceFromAccum -= totalWithdrawal * ratioAccum;
+                balanceFromInitial -= (balanceFromInitial * ratio);
+                invSettings.forEach(inv => {
+                    inv.balance -= (inv.balance * ratio);
+                    inv.principal -= (inv.principal * ratio); // 任意：元本履歴の調整用
+                });
                 
                 let ratioPrincipal = currentTotal > 0 ? (currentPrincipal / currentTotal) : 0;
                 if (ratioPrincipal > 1) ratioPrincipal = 1; 
@@ -675,7 +738,7 @@
             if (currentTotal <= 0 && y > 0 && !isDepleted) {
                 currentTotal = 0;
                 balanceFromInitial = 0;
-                balanceFromAccum = 0;
+                invSettings.forEach(inv => inv.balance = 0);
                 currentPrincipal = 0;
                 isDepleted = true;
             }
@@ -688,7 +751,7 @@
             tableHTML += `
                 <tr>
                     <td>${displayAge}歳</td>
-                    <td>${Math.round(investedThisYear).toLocaleString()}</td>
+                    <td>${Math.round(totalInvestedThisYear).toLocaleString()}</td>
                     <td>${Math.round(totalWithdrawal).toLocaleString()}</td>
                     <td>${Math.round(currentPrincipal).toLocaleString()}</td>
                     <td>${Math.round(currentTotal - currentPrincipal).toLocaleString()}</td>
@@ -706,7 +769,6 @@
         document.getElementById('tableBody').innerHTML = tableHTML;
 
         drawChart(labels, principalData, profitData);
-        
         updateTargetResult();
     }
 
