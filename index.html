@@ -169,6 +169,27 @@
         .action-btn:hover {
             background-color: #3fa5cb;
         }
+        
+        /* リセットボタンのスタイル */
+        .reset-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #fff;
+            color: #888;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .reset-btn:hover {
+            background-color: #f8f8f8;
+            color: #d9534f;
+            border-color: #d9534f;
+        }
+
         .add-btn {
             width: 100%;
             padding: 10px;
@@ -354,7 +375,7 @@
             <div class="phase-box investment-box">
                 <div class="row-title">
                     <span>資金投入 1</span>
-                    </div>
+                </div>
                 <div class="input-row">
                     <label>方式</label>
                     <div class="flex-group">
@@ -426,6 +447,8 @@
         <button type="button" class="add-btn" onclick="addWithdrawal()">＋ 取り崩しを追加する</button>
 
         <button class="action-btn" onclick="calculate()">シミュレーション実行</button>
+        
+        <button class="reset-btn" onclick="confirmReset()">入力をすべてリセットする</button>
     </div>
 
     <div class="chart-panel">
@@ -484,7 +507,6 @@
     let invCount = 1;
     let wdwCount = 1;
 
-    // 入力枠の追加関数（資金投入）
     function addInvestment() {
         invCount++;
         const container = document.getElementById('investments-container');
@@ -529,7 +551,6 @@
         container.insertAdjacentHTML('beforeend', html);
     }
 
-    // 入力枠の追加関数（取り崩し）
     function addWithdrawal() {
         wdwCount++;
         const container = document.getElementById('withdrawals-container');
@@ -563,7 +584,6 @@
         container.insertAdjacentHTML('beforeend', html);
     }
 
-    // 一括を選んだ時に終了年齢を隠す関数（資金投入用）
     function toggleInvEndAge(selectElem) {
         const box = selectElem.closest('.phase-box');
         if (selectElem.value === 'lump_sum') {
@@ -575,7 +595,6 @@
         }
     }
 
-    // 一括を選んだ時に終了年齢を隠す関数（取り崩し用）
     function toggleWdwEndAge(selectElem) {
         const box = selectElem.closest('.phase-box');
         if (selectElem.value === 'lump_sum') {
@@ -584,6 +603,31 @@
         } else {
             box.querySelector('.w-end-wrap').style.display = 'inline-block';
             box.querySelector('.w-end-tilde').style.display = 'inline';
+        }
+    }
+
+    // 追加：リセット確認と処理
+    function confirmReset() {
+        if (confirm("入力したすべての条件を削除して、初期状態に戻しますか？")) {
+            // 基本入力のリセット
+            document.getElementById('currentAge').value = "";
+            document.getElementById('initialAmount').value = "";
+            document.getElementById('defaultRate').value = "";
+            
+            // 資金投入枠のリセット（1つ残して削除）
+            const invContainer = document.getElementById('investments-container');
+            invContainer.innerHTML = '';
+            invCount = 0;
+            addInvestment();
+            
+            // 取り崩し枠のリセット（1つ残して削除）
+            const wdwContainer = document.getElementById('withdrawals-container');
+            wdwContainer.innerHTML = '';
+            wdwCount = 0;
+            addWithdrawal();
+            
+            // 結果表示とグラフのリセット
+            calculate(); 
         }
     }
 
@@ -614,7 +658,6 @@
 
         const totalYears = endAge - startAge;
 
-        // UIから資金投入の設定をすべて読み取る
         let invSettings = [];
         document.querySelectorAll('.investment-box').forEach(box => {
             invSettings.push({
@@ -628,7 +671,6 @@
             });
         });
 
-        // UIから取り崩しの設定をすべて読み取る
         let wdwSettings = [];
         document.querySelectorAll('.withdrawal-box').forEach(box => {
             wdwSettings.push({
@@ -641,7 +683,7 @@
 
         let balanceFromInitial = initialAmount; 
         let currentPrincipal = initialAmount; 
-        let isDepleted = false;
+        let isDepleted = false; 
         
         let labels = [startAge];
         let principalData = [initialAmount];
@@ -651,19 +693,16 @@
         for (let y = 1; y <= totalYears; y++) {
             let currentAgeYears = startAge + y - 1;
             
-            // ① 初期元本バケツを増やす
             balanceFromInitial *= (1 + defaultRate);
             
             let totalInvestedThisYear = 0;
 
-            // ② 各資金投入バケツを処理する
             invSettings.forEach(inv => {
                 let activeRate = inv.rateStr !== "" ? parseFloat(inv.rateStr) / 100 : defaultRate;
                 let annualGrowth = 1 + activeRate;
                 let monthlyRate = activeRate / 12;
 
                 if (inv.type === 'lump_sum') {
-                    // 一括投入バケツの成長
                     inv.balance *= annualGrowth;
                     if (currentAgeYears === inv.start && inv.amt > 0) {
                         inv.balance += inv.amt;
@@ -671,7 +710,6 @@
                         totalInvestedThisYear += inv.amt;
                     }
                 } else {
-                    // 毎月積立バケツの成長
                     if (!isNaN(inv.start) && !isNaN(inv.end) && currentAgeYears >= inv.start && currentAgeYears < inv.end && inv.amt > 0) {
                         inv.balance *= Math.pow(1 + monthlyRate, 12);
                         let fvAnnuity = 0;
@@ -684,17 +722,14 @@
                         inv.principal += (inv.amt * 12);
                         totalInvestedThisYear += (inv.amt * 12);
                     } else {
-                        // 据置期間
                         inv.balance *= annualGrowth;
                     }
                 }
             });
 
-            // 現在の総資産（取り崩し前）
             let currentTotal = balanceFromInitial + invSettings.reduce((sum, inv) => sum + inv.balance, 0);
             currentPrincipal += totalInvestedThisYear;
 
-            // ③ 取り崩し処理
             let withdrawnAmountThisYear = 0;
             let withdrawPercentThisYear = 0;
 
@@ -717,15 +752,14 @@
                 totalWithdrawal = currentTotal;
             }
 
-            // バケツから割合で引き出す
-            if (totalWithdrawal > 0 && !isDepleted) {
+            if (totalWithdrawal > 0) {
                 let ratio = currentTotal > 0 ? (totalWithdrawal / currentTotal) : 0;
                 if (ratio > 1) ratio = 1;
                 
                 balanceFromInitial -= (balanceFromInitial * ratio);
                 invSettings.forEach(inv => {
                     inv.balance -= (inv.balance * ratio);
-                    inv.principal -= (inv.principal * ratio); // 任意：元本履歴の調整用
+                    inv.principal -= (inv.principal * ratio); 
                 });
                 
                 let ratioPrincipal = currentTotal > 0 ? (currentPrincipal / currentTotal) : 0;
@@ -735,12 +769,12 @@
                 currentTotal -= totalWithdrawal;
             }
 
-            if (currentTotal <= 0 && y > 0 && !isDepleted) {
+            if (currentTotal <= 0 && y > 0) {
                 currentTotal = 0;
                 balanceFromInitial = 0;
                 invSettings.forEach(inv => inv.balance = 0);
                 currentPrincipal = 0;
-                isDepleted = true;
+                isDepleted = true; 
             }
 
             let displayAge = currentAgeYears + 1; 
