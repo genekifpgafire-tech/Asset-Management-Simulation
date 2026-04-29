@@ -28,7 +28,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
             display: flex;
             flex-wrap: wrap;
@@ -170,7 +170,6 @@
             background-color: #3fa5cb;
         }
         
-        /* リセットボタンのスタイル */
         .reset-btn {
             width: 100%;
             padding: 10px;
@@ -207,7 +206,7 @@
             background-color: #d1eff7;
         }
         .result-box {
-            margin-top: 20px;
+            margin-top: 10px;
             padding: 20px;
             background-color: #f9fdfd;
             border: 2px solid var(--primary-light);
@@ -224,7 +223,7 @@
             margin-top: 15px;
             padding: 15px;
             background-color: #fff;
-            border: 2px dashed var(--primary-light);
+            border: 2px dashed var(--primary-color);
             border-radius: 8px;
             text-align: center;
         }
@@ -335,8 +334,8 @@
         <h2>💡 簡単な使い方</h2>
         <ol>
             <li>まずは<strong>「現在の年齢」</strong>を入力してください。</li>
-            <li><strong>「基本の運用利回り」</strong>に運用率を入力すると、その後は投資元本を含め、設定がない期間はずっとその％で運用し続けます。</li>
-            <li>「追加する」ボタンを押して、<strong>毎月積立</strong>や<strong>一括投入（一時金）</strong>、<strong>取り崩し</strong>を自由に追加し、「シミュレーション実行」を押してください。</li>
+            <li><strong>「基本の運用利回り」</strong>に運用率を入れると、設定がない期間はずっとその％で運用し続けます。</li>
+            <li>「追加する」ボタンを押して、<strong>毎月積立</strong>や<strong>一括投入</strong>、<strong>取り崩し</strong>を自由に追加し、「シミュレーション実行」を押してください。</li>
         </ol>
     </div>
 
@@ -364,11 +363,20 @@
                 <span class="unit">％</span>
             </div>
         </div>
+        <div class="input-row">
+            <label style="color:#d9534f;">想定リスク(標準偏差)</label>
+            <div class="flex-group">
+                <input type="number" id="riskRate" min="0" step="0.1" value="15" placeholder="例:15">
+                <span class="unit">％</span>
+            </div>
+        </div>
+        <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
+            ※下のモンテカルロシミュレーションで使う相場の振れ幅です。株式中心なら15～20%が目安。
+        </p>
 
         <div class="section-title">② 資金投入フェーズ</div>
         <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
-            ※利回りを空欄にした場合は「基本の運用利回り」で計算されます。<br>
-            ※一括投入は、指定した年齢の年に1回加算されます。
+            ※利回りを空欄にした場合は「基本の運用利回り」で計算されます。
         </p>
 
         <div id="investments-container">
@@ -447,12 +455,12 @@
         <button type="button" class="add-btn" onclick="addWithdrawal()">＋ 取り崩しを追加する</button>
 
         <button class="action-btn" onclick="calculate()">シミュレーション実行</button>
-        
         <button class="reset-btn" onclick="confirmReset()">入力をすべてリセットする</button>
     </div>
 
     <div class="chart-panel">
         
+        <div class="section-title" style="margin-top: 0;">📊 確定シミュレーション（一定の利回りで計算）</div>
         <div class="chart-wrapper">
             <canvas id="assetChart"></canvas>
             <div id="chartOverlay" class="chart-overlay">
@@ -464,7 +472,7 @@
             <div style="font-size: 14px; color: #555;">100歳時点での最終的な資産残高</div>
             <div class="result-value" id="finalTotal">0円</div>
             <div style="margin-top:10px; font-size: 13px; color: #d9534f; font-weight:bold; display:none;" id="depletionWarning">
-                ※シミュレーション期間中に資産が枯渇しました
+                ※確定シミュレーション期間中に資産が枯渇しました
             </div>
         </div>
 
@@ -477,6 +485,18 @@
             <div class="target-age-value" id="targetAgeTotal">0円</div>
             <div style="font-size: 13px; color: #666; margin-top: 5px;">
                 (投資元本: <span id="targetAgePrincipal" style="font-weight:bold;">0</span>円 / 運用益: <span id="targetAgeProfit" style="font-weight:bold;">0</span>円)
+            </div>
+        </div>
+
+        <div class="section-title" style="background-color:#ffe8e8; color:#a94442;">🎲 モンテカルロシミュレーション（1000回の確率予測）</div>
+        <div style="font-size: 14px; text-align: center; margin-bottom: 10px; background-color:#fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+            シミュレーション終了時(100歳) の <span style="font-weight:bold; color:#d9534f;">資産枯渇確率</span>（破産率）<br>
+            <span id="mcDepletionRate" style="font-size: 28px; font-weight: bold; color: #d9534f;">- ％</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="monteCarloChart"></canvas>
+            <div id="mcChartOverlay" class="chart-overlay">
+                条件を入力して「シミュレーション実行」を押してください
             </div>
         </div>
 
@@ -501,6 +521,7 @@
 
 <script>
     let myChart = null;
+    let mcChart = null; 
     let globalLabels = [];
     let globalPrincipalData = [];
     let globalProfitData = [];
@@ -606,27 +627,23 @@
         }
     }
 
-    // 追加：リセット確認と処理
     function confirmReset() {
         if (confirm("入力したすべての条件を削除して、初期状態に戻しますか？")) {
-            // 基本入力のリセット
             document.getElementById('currentAge').value = "";
             document.getElementById('initialAmount').value = "";
             document.getElementById('defaultRate').value = "";
+            document.getElementById('riskRate').value = "15";
             
-            // 資金投入枠のリセット（1つ残して削除）
             const invContainer = document.getElementById('investments-container');
             invContainer.innerHTML = '';
             invCount = 0;
             addInvestment();
             
-            // 取り崩し枠のリセット（1つ残して削除）
             const wdwContainer = document.getElementById('withdrawals-container');
             wdwContainer.innerHTML = '';
             wdwCount = 0;
             addWithdrawal();
             
-            // 結果表示とグラフのリセット
             calculate(); 
         }
     }
@@ -634,20 +651,25 @@
     function calculate() {
         const startAgeInput = document.getElementById('currentAge').value;
         const overlay = document.getElementById('chartOverlay');
+        const mcOverlay = document.getElementById('mcChartOverlay');
         
         if (startAgeInput === "") {
             overlay.style.display = 'flex';
+            mcOverlay.style.display = 'flex';
             document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">条件を入力して「シミュレーション実行」を押してください</td></tr>';
             document.getElementById('finalTotal').innerText = '0円';
+            document.getElementById('mcDepletionRate').innerText = '- ％';
             document.getElementById('targetAgeTotal').innerText = '- 円';
             document.getElementById('targetAgePrincipal').innerText = '-';
             document.getElementById('targetAgeProfit').innerText = '-';
             document.getElementById('depletionWarning').style.display = 'none';
             drawChart([], [], []);
+            drawMCChart([], [], [], []);
             return;
         }
 
         overlay.style.display = 'none';
+        mcOverlay.style.display = 'none';
 
         const startAge = parseInt(startAgeInput) || 0;
         const initialAmount = parseFloat(document.getElementById('initialAmount').value) * 10000 || 0;
@@ -681,6 +703,7 @@
             });
         });
 
+        // ① 確定シミュレーション
         let balanceFromInitial = initialAmount; 
         let currentPrincipal = initialAmount; 
         let isDepleted = false; 
@@ -694,7 +717,6 @@
             let currentAgeYears = startAge + y - 1;
             
             balanceFromInitial *= (1 + defaultRate);
-            
             let totalInvestedThisYear = 0;
 
             invSettings.forEach(inv => {
@@ -747,10 +769,7 @@
             });
 
             let totalWithdrawal = withdrawnAmountThisYear + (currentTotal * withdrawPercentThisYear);
-
-            if (totalWithdrawal > currentTotal) {
-                totalWithdrawal = currentTotal;
-            }
+            if (totalWithdrawal > currentTotal) totalWithdrawal = currentTotal;
 
             if (totalWithdrawal > 0) {
                 let ratio = currentTotal > 0 ? (totalWithdrawal / currentTotal) : 0;
@@ -765,7 +784,6 @@
                 let ratioPrincipal = currentTotal > 0 ? (currentPrincipal / currentTotal) : 0;
                 if (ratioPrincipal > 1) ratioPrincipal = 1; 
                 currentPrincipal -= (totalWithdrawal * ratioPrincipal);
-                
                 currentTotal -= totalWithdrawal;
             }
 
@@ -804,6 +822,102 @@
 
         drawChart(labels, principalData, profitData);
         updateTargetResult();
+
+        // ② モンテカルロシミュレーション
+        const riskInput = document.getElementById('riskRate').value;
+        const risk = riskInput !== "" ? parseFloat(riskInput) / 100 : 0.15; 
+        const numPaths = 1000;
+        
+        let mcResults = []; 
+        for (let y = 0; y <= totalYears; y++) {
+            mcResults.push(new Float32Array(numPaths));
+        }
+
+        let depletedCount = 0; 
+
+        for(let p = 0; p < numPaths; p++) {
+            let currentMCTotal = initialAmount;
+            mcResults[0][p] = currentMCTotal;
+            let pathDepleted = false;
+            
+            for (let y = 1; y <= totalYears; y++) {
+                let currentAgeYears = startAge + y - 1;
+                
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random(); 
+                while(v === 0) v = Math.random();
+                let rand = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                
+                let totalInvestedThisYear = 0;
+                let blendedRate = defaultRate;
+                
+                invSettings.forEach(inv => {
+                    if (inv.type === 'lump_sum') {
+                        if (currentAgeYears === inv.start && inv.amt > 0) {
+                            totalInvestedThisYear += inv.amt;
+                            if (inv.rateStr !== "") blendedRate = parseFloat(inv.rateStr) / 100;
+                        }
+                    } else {
+                        if (!isNaN(inv.start) && !isNaN(inv.end) && currentAgeYears >= inv.start && currentAgeYears < inv.end && inv.amt > 0) {
+                            totalInvestedThisYear += (inv.amt * 12);
+                            if (inv.rateStr !== "") blendedRate = parseFloat(inv.rateStr) / 100;
+                        }
+                    }
+                });
+                
+                let simulatedAnnualRate = blendedRate + risk * rand;
+                
+                currentMCTotal = currentMCTotal * (1 + simulatedAnnualRate) + totalInvestedThisYear;
+                
+                let withdrawnAmountThisYear = 0;
+                let withdrawPercentThisYear = 0;
+
+                wdwSettings.forEach(wdw => {
+                    if (wdw.type === 'lump_sum') {
+                        if (currentAgeYears === wdw.start) {
+                            withdrawnAmountThisYear += (wdw.val * 10000);
+                        }
+                    } else {
+                        if (!isNaN(wdw.start) && !isNaN(wdw.end) && currentAgeYears >= wdw.start && currentAgeYears < wdw.end) {
+                            if (wdw.type === 'amount') withdrawnAmountThisYear += (wdw.val * 10000 * 12);
+                            if (wdw.type === 'percent') withdrawPercentThisYear += (wdw.val / 100);
+                        }
+                    }
+                });
+                
+                let totalWithdrawal = withdrawnAmountThisYear + (currentMCTotal * withdrawPercentThisYear);
+                if (totalWithdrawal > currentMCTotal) totalWithdrawal = currentMCTotal;
+                if (totalWithdrawal > 0) currentMCTotal -= totalWithdrawal;
+                if (currentMCTotal < 0) currentMCTotal = 0;
+                
+                if (currentMCTotal <= 0 && y > 0) {
+                    currentMCTotal = 0;
+                    pathDepleted = true;
+                }
+
+                mcResults[y][p] = currentMCTotal;
+            }
+            if (pathDepleted) {
+                depletedCount++;
+            }
+        }
+
+        let p90Data = [];
+        let p50Data = [];
+        let p10Data = [];
+
+        for (let y = 0; y <= totalYears; y++) {
+            let yearData = Array.from(mcResults[y]);
+            yearData.sort((a, b) => a - b);
+            p10Data.push(Math.round(yearData[Math.floor(numPaths * 0.1)])); 
+            p50Data.push(Math.round(yearData[Math.floor(numPaths * 0.5)])); 
+            p90Data.push(Math.round(yearData[Math.floor(numPaths * 0.9)])); 
+        }
+
+        let depletionRate = (depletedCount / numPaths) * 100;
+        document.getElementById('mcDepletionRate').innerText = depletionRate.toFixed(1) + ' ％';
+        
+        drawMCChart(labels, p90Data, p50Data, p10Data);
     }
 
     function updateTargetResult() {
@@ -834,7 +948,7 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels.length > 0 ? labels.map(y => y + '歳') : ['年齢'],
+                labels: labels.length > 0 ? labels : ['年齢'],
                 datasets: [
                     {
                         label: '投資元本',
@@ -873,6 +987,79 @@
                     x: { stacked: true, ticks: { maxTicksLimit: 20 } },
                     y: {
                         stacked: true,
+                        ticks: {
+                            callback: function(value) { return value / 10000 + '万円'; }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function drawMCChart(labels, p90, p50, p10) {
+        const ctx = document.getElementById('monteCarloChart').getContext('2d');
+        if (mcChart) mcChart.destroy();
+
+        mcChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.length > 0 ? labels : ['年齢'],
+                datasets: [
+                    {
+                        label: '上位10% (うまくいった場合)',
+                        data: p90,
+                        borderColor: '#A8E0F2',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    },
+                    {
+                        label: '中央値 (50%)',
+                        data: p50,
+                        borderColor: '#55BBE1',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '下位10% (運が悪かった場合)',
+                        data: p10,
+                        borderColor: '#d9534f',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null && context.parsed.y !== 0) {
+                                    label += Math.round(context.parsed.y / 10000).toLocaleString() + '万円';
+                                } else {
+                                    label += '0円';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 20 } },
+                    y: {
+                        min: 0,
                         ticks: {
                             callback: function(value) { return value / 10000 + '万円'; }
                         }
