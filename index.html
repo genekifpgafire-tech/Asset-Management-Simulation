@@ -223,7 +223,7 @@
             margin-top: 15px;
             padding: 15px;
             background-color: #fff;
-            border: 2px dashed var(--primary-color);
+            border: 2px dashed var(--primary-light);
             border-radius: 8px;
             text-align: center;
         }
@@ -294,11 +294,23 @@
             background-color: #f9fdfd;
         }
         
-        .chart-wrapper {
+        .chart-outer-wrapper {
             position: relative; 
-            height: 300px; 
             width: 100%; 
             margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .chart-scroll-area {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            background-color: #fff;
+        }
+        .chart-inner-container {
+            height: 300px; 
         }
         .chart-overlay {
             position: absolute;
@@ -309,12 +321,31 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: rgba(255, 255, 255, 0.75);
             color: #666;
             font-weight: bold;
             font-size: 14px;
             z-index: 10;
-            border-radius: 8px;
+        }
+        .scroll-hint {
+            text-align: right;
+            font-size: 11px;
+            color: #888;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+        
+        .qt-table th {
+            background-color: #fff3cd;
+            color: #8a6d3b;
+            box-shadow: 0 1px 0 #ffeeba, 0 -1px 0 #ffeeba;
+        }
+        .qt-btn {
+            background-color: #f0ad4e;
+            box-shadow: 0 4px 6px rgba(240, 173, 78, 0.2);
+        }
+        .qt-btn:hover {
+            background-color: #ec971f;
         }
     </style>
 </head>
@@ -333,12 +364,14 @@
     <div class="instructions">
         <h2>💡 簡単な使い方</h2>
         <ol>
-            <li>まずは<strong>「現在の年齢」</strong>を入力してください。</li>
+            <li>まずは<strong>「現在の年齢」</strong>と<strong>「シミュレーション終了年齢」</strong>を入力してください。</li>
             <li><strong>「基本の運用利回り」</strong>に運用率を入れると、設定がない期間はずっとその％で運用し続けます。</li>
             <li>「追加する」ボタンを押して、<strong>毎月積立</strong>や<strong>一括投入</strong>、<strong>取り崩し</strong>を自由に追加し、「シミュレーション実行」を押してください。</li>
+            <li>★NEW★ 積立額ごとの残高一覧が見たい場合は、一番下の<strong>「早見表を作成する」</strong>をご利用ください。</li>
         </ol>
     </div>
 
+    <!-- 左側：入力パネル -->
     <div class="settings-panel">
         
         <div class="section-title">① 基本設定</div>
@@ -346,6 +379,13 @@
             <label>現在の年齢</label>
             <div class="flex-group">
                 <input type="number" id="currentAge" min="0" max="99" placeholder="例:30">
+                <span class="unit">歳</span>
+            </div>
+        </div>
+        <div class="input-row">
+            <label style="color:#1a5c73;">シミュレーション終了年齢</label>
+            <div class="flex-group">
+                <input type="number" id="endAge" min="1" max="120" value="100">
                 <span class="unit">歳</span>
             </div>
         </div>
@@ -456,20 +496,58 @@
 
         <button class="action-btn" onclick="calculate()">シミュレーション実行</button>
         <button class="reset-btn" onclick="confirmReset()">入力をすべてリセットする</button>
+
+        <!-- ★早見表作成ツール★ -->
+        <div class="section-title" style="background-color:#fff3cd; color:#8a6d3b;">④ 【おまけ】積立額別の早見表作成</div>
+        <p style="font-size:11px; color:#888; margin-top:-5px; margin-bottom:10px;">
+            ※①の初期元本と③の取り崩し設定を反映した上で、以下の積立（1〜30万）を行った場合の結果を計算します。<br>※②の資金投入の設定は無視されます。
+        </p>
+        <div class="phase-box" style="background-color:#fffdf5; border-color:#ffeeba;">
+            <div class="input-row">
+                <label>積立期間</label>
+                <div class="flex-group" style="font-size: 13px;">
+                    <input type="number" id="qtStart" class="small-input" value="30"> 歳～ 
+                    <span class="i-end-wrap"><input type="number" id="qtEnd" class="small-input" value="60"> 歳</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>確認したい年齢</label>
+                <div class="flex-group">
+                    <input type="number" id="qtTarget" class="small-input" value="65">
+                    <span class="unit">歳</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>運用利回り</label>
+                <div class="flex-group">
+                    <input type="number" id="qtRate" class="small-input" value="5" step="0.1">
+                    <span class="unit">％</span>
+                </div>
+            </div>
+            <button class="action-btn qt-btn" style="margin-top:10px; padding:10px; font-size:14px;" onclick="generateQuickTable()">早見表を作成する</button>
+        </div>
+
     </div>
 
+    <!-- 右側：グラフと結果パネル -->
     <div class="chart-panel">
         
         <div class="section-title" style="margin-top: 0;">📊 確定シミュレーション（一定の利回りで計算）</div>
-        <div class="chart-wrapper">
-            <canvas id="assetChart"></canvas>
+        <div class="scroll-hint">👉 グラフは横にスクロールできます</div>
+        
+        <div class="chart-outer-wrapper">
+            <div class="chart-scroll-area">
+                <div class="chart-inner-container" id="assetChartInner">
+                    <canvas id="assetChart"></canvas>
+                </div>
+            </div>
             <div id="chartOverlay" class="chart-overlay">
                 条件を入力して「シミュレーション実行」を押してください
             </div>
         </div>
         
         <div class="result-box">
-            <div style="font-size: 14px; color: #555;">100歳時点での最終的な資産残高</div>
+            <div style="font-size: 14px; color: #555;" id="finalTotalLabel">100歳時点での最終的な資産残高</div>
             <div class="result-value" id="finalTotal">0円</div>
             <div style="margin-top:10px; font-size: 13px; color: #d9534f; font-weight:bold; display:none;" id="depletionWarning">
                 ※確定シミュレーション期間中に資産が枯渇しました
@@ -479,7 +557,7 @@
         <div class="target-age-box">
             <div class="input-wrap">
                 <span style="font-size: 14px; font-weight: bold; color: #555;">ピンポイント確認：</span>
-                <input type="number" id="targetAgeInput" value="65" min="0" max="100" style="width: 60px; padding: 5px; text-align: right;" oninput="updateTargetResult()"> 
+                <input type="number" id="targetAgeInput" value="65" min="0" max="120" style="width: 60px; padding: 5px; text-align: right;" oninput="updateTargetResult()"> 
                 <span style="font-size: 14px; font-weight: bold; color: #555;">歳時点の資産残高</span>
             </div>
             <div class="target-age-value" id="targetAgeTotal">0円</div>
@@ -490,11 +568,17 @@
 
         <div class="section-title" style="background-color:#ffe8e8; color:#a94442;">🎲 モンテカルロシミュレーション（1000回の確率予測）</div>
         <div style="font-size: 14px; text-align: center; margin-bottom: 10px; background-color:#fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
-            シミュレーション終了時(100歳) の <span style="font-weight:bold; color:#d9534f;">資産枯渇確率</span>（破産率）<br>
+            <span id="mcFinalAgeLabel">シミュレーション終了時(100歳) の </span><span style="font-weight:bold; color:#d9534f;">資産枯渇確率</span>（破産率）<br>
             <span id="mcDepletionRate" style="font-size: 28px; font-weight: bold; color: #d9534f;">- ％</span>
         </div>
-        <div class="chart-wrapper">
-            <canvas id="monteCarloChart"></canvas>
+        
+        <div class="scroll-hint">👉 グラフは横にスクロールできます</div>
+        <div class="chart-outer-wrapper">
+            <div class="chart-scroll-area">
+                <div class="chart-inner-container" id="mcChartInner">
+                    <canvas id="monteCarloChart"></canvas>
+                </div>
+            </div>
             <div id="mcChartOverlay" class="chart-overlay">
                 条件を入力して「シミュレーション実行」を押してください
             </div>
@@ -516,6 +600,24 @@
                 </tbody>
             </table>
         </div>
+
+        <div id="quickTableContainer" style="display:none; margin-top: 40px;">
+            <div class="section-title" style="background-color:#fff3cd; color:#8a6d3b;">📋 毎月の積立額別・早見表 (1〜30万円)</div>
+            <div class="table-wrapper">
+                <table class="qt-table">
+                    <thead>
+                        <tr>
+                            <th>毎月の積立額</th>
+                            <th id="qtResultHeader">65歳時点の資産残高</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quickTableResult">
+                        <!-- Javascriptで生成されます -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -630,9 +732,10 @@
     function confirmReset() {
         if (confirm("入力したすべての条件を削除して、初期状態に戻しますか？")) {
             document.getElementById('currentAge').value = "";
+            document.getElementById('endAge').value = "100";
             document.getElementById('initialAmount').value = "";
             document.getElementById('defaultRate').value = "";
-            document.getElementById('riskRate').value = "15";
+            document.getElementById('riskRate').value = "15"; 
             
             const invContainer = document.getElementById('investments-container');
             invContainer.innerHTML = '';
@@ -644,14 +747,174 @@
             wdwCount = 0;
             addWithdrawal();
             
+            document.getElementById('quickTableContainer').style.display = 'none';
+            
             calculate(); 
         }
+    }
+    
+    // ★早見表生成ロジック：メイン設定（元本・取り崩し）を引き継ぎ、②の投資を無視して計算
+    function generateQuickTable() {
+        const startAgeInput = document.getElementById('currentAge').value;
+        if (startAgeInput === "") {
+            alert("まずは①基本設定の「現在の年齢」を入力してください。");
+            return;
+        }
+
+        const startAge = parseInt(startAgeInput) || 0;
+        const initialAmount = parseFloat(document.getElementById('initialAmount').value) * 10000 || 0;
+        const defaultRate = parseFloat(document.getElementById('defaultRate').value) / 100 || 0;
+
+        const qtStart = parseInt(document.getElementById('qtStart').value);
+        const qtEnd = parseInt(document.getElementById('qtEnd').value);
+        const qtTarget = parseInt(document.getElementById('qtTarget').value);
+        const qtRate = document.getElementById('qtRate').value; 
+
+        if (isNaN(qtStart) || isNaN(qtEnd) || isNaN(qtTarget) || qtStart >= qtEnd || qtTarget < startAge) {
+            alert("年齢の設定を正しく入力してください。（開始 < 終了、確認年齢 >= 現在の年齢）");
+            return;
+        }
+
+        document.getElementById('qtResultHeader').innerText = qtTarget + '歳時点の資産残高';
+
+        // ★ メインの取り崩し設定だけを読み取る
+        let baseWdwSettings = [];
+        document.querySelectorAll('.withdrawal-box').forEach(box => {
+            baseWdwSettings.push({
+                type: box.querySelector('.w-type').value,
+                start: parseInt(box.querySelector('.w-start').value),
+                end: parseInt(box.querySelector('.w-end').value),
+                val: parseFloat(box.querySelector('.w-val').value) || 0
+            });
+        });
+
+        let html = '';
+        const totalYears = qtTarget - startAge;
+
+        // 1万円〜30万円までループ計算
+        for (let amt = 1; amt <= 30; amt++) {
+            let balanceFromInitial = initialAmount;
+            let isDepleted = false;
+            
+            // ★資金投入は、早見表で設定した1つの積立バケツだけにする
+            let invSettings = [{
+                type: 'amount',
+                start: qtStart,
+                end: qtEnd,
+                amt: amt * 10000,
+                rateStr: qtRate.toString(),
+                balance: 0
+            }];
+
+            let currentTotal = 0;
+
+            if (totalYears === 0) {
+                currentTotal = initialAmount;
+            } else {
+                for (let y = 1; y <= totalYears; y++) {
+                    let currentAgeYears = startAge + y - 1;
+                    
+                    // 初期元本バケツの成長
+                    balanceFromInitial *= (1 + defaultRate);
+                    
+                    // 積立バケツの成長
+                    invSettings.forEach(inv => {
+                        let activeRate = inv.rateStr !== "" ? parseFloat(inv.rateStr) / 100 : defaultRate;
+                        let annualGrowth = 1 + activeRate;
+                        let monthlyRate = activeRate / 12;
+
+                        if (!isNaN(inv.start) && !isNaN(inv.end) && currentAgeYears >= inv.start && currentAgeYears < inv.end && inv.amt > 0) {
+                            inv.balance *= Math.pow(1 + monthlyRate, 12);
+                            let fvAnnuity = 0;
+                            if (monthlyRate === 0) {
+                                fvAnnuity = inv.amt * 12;
+                            } else {
+                                fvAnnuity = inv.amt * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
+                            }
+                            inv.balance += fvAnnuity;
+                        } else {
+                            inv.balance *= annualGrowth;
+                        }
+                    });
+
+                    currentTotal = balanceFromInitial + invSettings.reduce((sum, inv) => sum + inv.balance, 0);
+
+                    // 取り崩し処理
+                    let withdrawnAmountThisYear = 0;
+                    let withdrawPercentThisYear = 0;
+
+                    baseWdwSettings.forEach(wdw => {
+                        if (wdw.type === 'lump_sum') {
+                            if (currentAgeYears === wdw.start) {
+                                withdrawnAmountThisYear += (wdw.val * 10000);
+                            }
+                        } else {
+                            if (!isNaN(wdw.start) && !isNaN(wdw.end) && currentAgeYears >= wdw.start && currentAgeYears < wdw.end) {
+                                if (wdw.type === 'amount') withdrawnAmountThisYear += (wdw.val * 10000 * 12);
+                                if (wdw.type === 'percent') withdrawPercentThisYear += (wdw.val / 100);
+                            }
+                        }
+                    });
+
+                    let totalWithdrawal = withdrawnAmountThisYear + (currentTotal * withdrawPercentThisYear);
+                    if (totalWithdrawal > currentTotal) totalWithdrawal = currentTotal;
+
+                    // バケツから割合で引く
+                    if (totalWithdrawal > 0 && !isDepleted) {
+                        let ratio = currentTotal > 0 ? (totalWithdrawal / currentTotal) : 0;
+                        if (ratio > 1) ratio = 1;
+                        
+                        balanceFromInitial -= (balanceFromInitial * ratio);
+                        invSettings.forEach(inv => {
+                            inv.balance -= (inv.balance * ratio);
+                        });
+                        
+                        currentTotal -= totalWithdrawal;
+                    }
+
+                    if (currentTotal <= 0 && y > 0) {
+                        currentTotal = 0;
+                        balanceFromInitial = 0;
+                        invSettings.forEach(inv => inv.balance = 0);
+                        isDepleted = true; 
+                    }
+                }
+            }
+            
+            let textColor = isDepleted ? '#d9534f' : 'var(--primary-color)';
+            let extraText = isDepleted ? '<span style="font-size:11px; color:#d9534f; display:block; margin-top:2px;">※途中で枯渇しました</span>' : '';
+
+            html += `<tr>
+                <td style="text-align:center; font-weight:bold;">${amt}万円</td>
+                <td style="color:${textColor}; font-weight:bold; font-size:15px; text-align:right;">
+                    ${Math.round(currentTotal).toLocaleString()}円
+                    ${extraText}
+                </td>
+            </tr>`;
+        }
+
+        document.getElementById('quickTableResult').innerHTML = html;
+        document.getElementById('quickTableContainer').style.display = 'block';
+        
+        document.getElementById('quickTableContainer').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function adjustChartWidth(containerId, dataLength) {
+        const container = document.getElementById(containerId);
+        const requiredWidth = dataLength * 22;
+        container.style.minWidth = requiredWidth + 'px';
+        container.style.width = '100%';
     }
 
     function calculate() {
         const startAgeInput = document.getElementById('currentAge').value;
+        const endAgeInput = document.getElementById('endAge').value;
         const overlay = document.getElementById('chartOverlay');
         const mcOverlay = document.getElementById('mcChartOverlay');
+        
+        const endAgeLabel = endAgeInput ? parseInt(endAgeInput) : 100;
+        document.getElementById('finalTotalLabel').innerText = endAgeLabel + '歳時点での最終的な資産残高';
+        document.getElementById('mcFinalAgeLabel').innerText = 'シミュレーション終了時(' + endAgeLabel + '歳) の ';
         
         if (startAgeInput === "") {
             overlay.style.display = 'flex';
@@ -675,7 +938,7 @@
         const initialAmount = parseFloat(document.getElementById('initialAmount').value) * 10000 || 0;
         const defaultRate = parseFloat(document.getElementById('defaultRate').value) / 100 || 0;
 
-        const endAge = 100;
+        const endAge = parseInt(endAgeInput) || 100;
         if (startAge >= endAge) return;
 
         const totalYears = endAge - startAge;
@@ -703,7 +966,6 @@
             });
         });
 
-        // ① 確定シミュレーション
         let balanceFromInitial = initialAmount; 
         let currentPrincipal = initialAmount; 
         let isDepleted = false; 
@@ -820,10 +1082,10 @@
         document.getElementById('depletionWarning').style.display = isDepleted ? 'block' : 'none';
         document.getElementById('tableBody').innerHTML = tableHTML;
 
+        adjustChartWidth('assetChartInner', labels.length);
         drawChart(labels, principalData, profitData);
         updateTargetResult();
 
-        // ② モンテカルロシミュレーション
         const riskInput = document.getElementById('riskRate').value;
         const risk = riskInput !== "" ? parseFloat(riskInput) / 100 : 0.15; 
         const numPaths = 1000;
@@ -917,6 +1179,7 @@
         let depletionRate = (depletedCount / numPaths) * 100;
         document.getElementById('mcDepletionRate').innerText = depletionRate.toFixed(1) + ' ％';
         
+        adjustChartWidth('mcChartInner', labels.length);
         drawMCChart(labels, p90Data, p50Data, p10Data);
     }
 
@@ -948,7 +1211,7 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels.length > 0 ? labels : ['年齢'],
+                labels: labels.length > 0 ? labels.map(y => y + '歳') : ['年齢'],
                 datasets: [
                     {
                         label: '投資元本',
@@ -984,7 +1247,7 @@
                     }
                 },
                 scales: {
-                    x: { stacked: true, ticks: { maxTicksLimit: 20 } },
+                    x: { stacked: true },
                     y: {
                         stacked: true,
                         ticks: {
@@ -1003,7 +1266,7 @@
         mcChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels.length > 0 ? labels : ['年齢'],
+                labels: labels.length > 0 ? labels.map(y => y + '歳') : ['年齢'],
                 datasets: [
                     {
                         label: '上位10% (うまくいった場合)',
@@ -1057,7 +1320,7 @@
                     }
                 },
                 scales: {
-                    x: { ticks: { maxTicksLimit: 20 } },
+                    x: { },
                     y: {
                         min: 0,
                         ticks: {
